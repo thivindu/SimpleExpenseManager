@@ -16,15 +16,10 @@
 
 package lk.ac.mrt.cse.dbs.simpleexpensemanager.control;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -77,16 +72,8 @@ public abstract class ExpenseManager extends SQLiteOpenHelper implements Seriali
 
         if (!amount.isEmpty()) {
             double amountVal = Double.parseDouble(amount);
-
-            if (expenseType == ExpenseType.EXPENSE && !checkAccountBalance(accountNo, amountVal))
-                throw new InvalidAccountException("Please enter an amount that is lesser than the account balance.");
-            else {
-                addTransactionDB(transactionDate, accountNo, expenseType, amountVal);
-                transactionsHolder.logTransaction(transactionDate, accountNo, expenseType, amountVal);
-                updateAccountBalanceDB(accountNo, expenseType, amountVal);
-                accountsHolder.updateBalance(accountNo, expenseType, amountVal);
-            }
-
+            transactionsHolder.logTransaction(transactionDate, accountNo, expenseType, amountVal);
+            accountsHolder.updateBalance(accountNo, expenseType, amountVal);
         }
     }
 
@@ -109,7 +96,6 @@ public abstract class ExpenseManager extends SQLiteOpenHelper implements Seriali
      */
     public void addAccount(String accountNo, String bankName, String accountHolderName, double initialBalance) {
         Account account = new Account(accountNo, bankName, accountHolderName, initialBalance);
-        addAccountDB(accountNo, bankName, accountHolderName, initialBalance);
         accountsHolder.addAccount(account);
     }
 
@@ -147,74 +133,6 @@ public abstract class ExpenseManager extends SQLiteOpenHelper implements Seriali
      */
     public void setTransactionsDAO(TransactionDAO transactionDAO) {
         this.transactionsHolder = transactionDAO;
-    }
-
-    private void addAccountDB(String accountNo, String bankName, String accountHolderName, double balance) {
-        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("accountNo", accountNo);
-        contentValues.put("bankName", bankName);
-        contentValues.put("accountHolderName", accountHolderName);
-        contentValues.put("balance", balance);
-        sqLiteDb.insert("account", null, contentValues);
-    }
-
-    private void addTransactionDB(Date date, String accountNo, ExpenseType expenseType, double amount) {
-        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-        String strDate = dateFormat.format(date);
-        String strExpenseType = expenseType.toString();
-        contentValues.put("date", strDate);
-        contentValues.put("accountNo", accountNo);
-        contentValues.put("expenseType", strExpenseType);
-        contentValues.put("amount", amount);
-        sqLiteDb.insert("`transaction`", null, contentValues);
-    }
-
-    private Boolean checkAccountBalance(String accountNo, double amount) {
-        double balance = getAccountBalanceDB(accountNo);
-
-        return !(balance < amount);
-    }
-
-    private void updateAccountBalanceDB(String accountNo, ExpenseType expenseType, double amountVal) {
-        double curBalance = getAccountBalanceDB(accountNo);
-        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        double balance = 0.0;
-
-        switch (expenseType) {
-            case EXPENSE:
-                balance = curBalance - amountVal;
-                break;
-            case INCOME:
-                balance = curBalance + amountVal;
-                break;
-        }
-
-        contentValues.put("balance", balance);
-        Cursor cursor = sqLiteDb.rawQuery("SELECT * FROM `account` WHERE `accountNo` = ?", new String[]{accountNo});
-
-        if (cursor.getCount() > 0)
-            sqLiteDb.update("`account`", contentValues, "accountNo=?", new String[]{accountNo});
-        cursor.close();
-
-    }
-
-    private double getAccountBalanceDB(String accountNo) {
-        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
-        Cursor cursor = sqLiteDb.rawQuery("SELECT * FROM `account` WHERE `accountNo` = ?", new String[]{accountNo});
-        double balance = 0.0;
-
-        if (cursor.getCount() > 0) {
-            while(cursor.moveToNext()){
-                balance = cursor.getDouble(3);
-            }
-        }
-        cursor.close();
-
-        return balance;
     }
 
     /***
