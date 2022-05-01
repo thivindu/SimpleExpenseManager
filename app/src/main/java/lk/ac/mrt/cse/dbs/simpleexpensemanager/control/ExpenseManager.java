@@ -16,7 +16,14 @@
 
 package lk.ac.mrt.cse.dbs.simpleexpensemanager.control;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -33,9 +40,13 @@ import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Transaction;
  * The ExpenseManager acts as the mediator when performing transactions. This is an abstract class with an abstract
  * method to setup the DAO objects depending on the implementation.
  */
-public abstract class ExpenseManager implements Serializable {
+public abstract class ExpenseManager extends SQLiteOpenHelper implements Serializable {
     private AccountDAO accountsHolder;
     private TransactionDAO transactionsHolder;
+
+    public ExpenseManager(Context context) {
+        super(context, "190429G.db", null, 1);
+    }
 
     /***
      * Get list of account numbers as String.
@@ -65,6 +76,7 @@ public abstract class ExpenseManager implements Serializable {
 
         if (!amount.isEmpty()) {
             double amountVal = Double.parseDouble(amount);
+            addTransactionDB(transactionDate, accountNo, expenseType, amountVal);
             transactionsHolder.logTransaction(transactionDate, accountNo, expenseType, amountVal);
             accountsHolder.updateBalance(accountNo, expenseType, amountVal);
         }
@@ -89,6 +101,7 @@ public abstract class ExpenseManager implements Serializable {
      */
     public void addAccount(String accountNo, String bankName, String accountHolderName, double initialBalance) {
         Account account = new Account(accountNo, bankName, accountHolderName, initialBalance);
+        addAccountDB(accountNo, bankName, accountHolderName, initialBalance);
         accountsHolder.addAccount(account);
     }
 
@@ -126,6 +139,29 @@ public abstract class ExpenseManager implements Serializable {
      */
     public void setTransactionsDAO(TransactionDAO transactionDAO) {
         this.transactionsHolder = transactionDAO;
+    }
+
+    private void addAccountDB(String accountNo, String bankName, String accountHolderName, double balance) {
+        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("accountNo", accountNo);
+        contentValues.put("bankName", bankName);
+        contentValues.put("accountHolderName", accountHolderName);
+        contentValues.put("balance", balance);
+        sqLiteDb.insert("account", null, contentValues);
+    }
+
+    private void addTransactionDB(Date date, String accountNo, ExpenseType expenseType, double amount) {
+        SQLiteDatabase sqLiteDb = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        String strDate = dateFormat.format(date);
+        String strExpenseType = expenseType.toString();
+        contentValues.put("date", strDate);
+        contentValues.put("accountNo", accountNo);
+        contentValues.put("expenseType", strExpenseType);
+        contentValues.put("amount", amount);
+        sqLiteDb.insert("`transaction`", null, contentValues);
     }
 
     /***
