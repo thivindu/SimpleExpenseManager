@@ -16,14 +16,55 @@
 
 package lk.ac.mrt.cse.dbs.simpleexpensemanager;
 
-import android.app.Application;
-import android.test.ApplicationTestCase;
+import static org.junit.Assert.assertTrue;
+
+import android.content.Context;
+
+import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.List;
+
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.ExpenseManager;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.PersistentExpenseManager;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
  */
-public class ApplicationTest extends ApplicationTestCase<Application> {
-    public ApplicationTest() {
-        super(Application.class);
+public class ApplicationTest {
+    private ExpenseManager expenseManager;
+
+    @Before
+    public void createExpenseManager() {
+        Context context = ApplicationProvider.getApplicationContext();
+        expenseManager = new PersistentExpenseManager(context);
     }
+
+    @Test
+    public void addAccountTest() {
+        expenseManager.addAccount("6F","FBank","FFF", 908907.6093);
+        List<String> accountNumbers = expenseManager.getAccountNumbersList();
+        assertTrue(accountNumbers.contains("6F"));
+    }
+
+//    @Test
+//    public void addTransactionTest() {
+//        try {
+//            expenseManager.updateAccountBalance("1A", 10, 5, 2022, ExpenseType.EXPENSE, "3413");
+//        } catch (InvalidAccountException e) {
+//            e.printStackTrace();
+//        }
+//
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.set(2022, 5, 10);
+//        Date transactionDate = calendar.getTime();
+//
+//        double amountVal = Double.parseDouble("3413");
+//        Transaction transaction = new Transaction(transactionDate, "1A", ExpenseType.EXPENSE, amountVal);
+//
+//        List<Transaction> transactionList = expenseManager.getTransactionsDAO().getAllTransactionLogs();
+//        assertTrue(transactionList.contains(transaction));
+//    }
 }
