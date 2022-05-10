@@ -16,6 +16,7 @@
 
 package lk.ac.mrt.cse.dbs.simpleexpensemanager;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -25,10 +26,18 @@ import androidx.test.core.app.ApplicationProvider;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.ExpenseManager;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.PersistentExpenseManager;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.ExpenseType;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Transaction;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
@@ -49,22 +58,29 @@ public class ApplicationTest {
         assertTrue(accountNumbers.contains("2B"));
     }
 
-//    @Test
-//    public void addTransactionTest() {
-//        try {
-//            expenseManager.updateAccountBalance("1A", 10, 5, 2022, ExpenseType.EXPENSE, "3413");
-//        } catch (InvalidAccountException e) {
-//            e.printStackTrace();
-//        }
-//
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.set(2022, 5, 10);
-//        Date transactionDate = calendar.getTime();
-//
-//        double amountVal = Double.parseDouble("3413");
-//        Transaction transaction = new Transaction(transactionDate, "1A", ExpenseType.EXPENSE, amountVal);
-//
-//        List<Transaction> transactionList = expenseManager.getTransactionsDAO().getAllTransactionLogs();
-//        assertTrue(transactionList.contains(transaction));
-//    }
+    @Test
+    public void addTransactionTest() {
+        try {
+            expenseManager.updateAccountBalance("6F", 28, 3, 3014, ExpenseType.INCOME, "3000000");
+        } catch (InvalidAccountException e) {
+            e.printStackTrace();
+        }
+
+        List<Transaction> transactionList = expenseManager.getTransactionsDAO().getAllTransactionLogs();
+        Transaction insertedTransaction = transactionList.get(transactionList.size()-1);
+
+        int year = 3014;
+        int month = 4;
+        int day = 28;
+
+        Date transactionDate = insertedTransaction.getDate();
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        String strDate = dateFormat.format(transactionDate);
+        String expectedDate = String.valueOf(day)+"-"+String.format("%02d", month)+"-"+String.valueOf(year);
+
+        assertEquals("6F", insertedTransaction.getAccountNo());
+        assertEquals(expectedDate, strDate);
+        assertEquals(ExpenseType.INCOME, insertedTransaction.getExpenseType());
+        assertEquals(3000000.0, insertedTransaction.getAmount(), 0.0);
+    }
 }
