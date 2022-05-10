@@ -44,9 +44,9 @@ public class ApplicationTest {
 
     @Test
     public void addAccountTest() {
-        expenseManager.addAccount("6F","FBank","FFF", 908907.6093);
+        expenseManager.addAccount("2B","BBank","BBB", 5000);
         List<String> accountNumbers = expenseManager.getAccountNumbersList();
-        assertTrue(accountNumbers.contains("6F"));
+        assertTrue(accountNumbers.contains("2B"));
     }
 
 //    @Test
